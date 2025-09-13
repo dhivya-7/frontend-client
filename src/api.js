@@ -48,20 +48,35 @@ export async function register(payload) {
   }
 }
 
-// --- Search bookings ---
-export async function searchBookings(payload) {
+// Create booking
+export async function createBooking(payload) {
   try {
-    const res = await authFetch(`${API_BASE}/bookings/search`, {
+    const res = await fetch(`${API_BASE}/bookings`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-    return await res.json();
+    const data = await res.json();
+    return res.ok ? { success: true, booking: data } : { success: false, message: data.message };
   } catch (err) {
-    console.error("searchBookings error:", err);
-    return { available: false, cars: [] };
+    return { success: false, message: err.message };
   }
 }
 
+// Search bookings (available cars)
+export async function searchBookings(payload) {
+  try {
+    const res = await fetch(`${API_BASE}/bookings/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    return res.ok ? data : { cars: [], message: data.message };
+  } catch (err) {
+    console.error("searchBookings error:", err);
+    return { cars: [], message: err.message };
+  }
+}

@@ -6,7 +6,7 @@ import { Routes, Route } from "react-router-dom";
 import TopNavbar from "./components/TopNavbar";
 import SecondNavbar from "./components/SecondNavbar";
 import Footer from "./components/Footer";
-import AuthModal from "./components/AuthModal"; // ✅ main auth component
+import AuthModal from "./components/AuthModal"; 
 
 
 // Pages

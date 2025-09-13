@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { createBooking } from "../api";
 import "./bookingform.css";
 
 export default function BookingForm({ prefillCar, onClose }) {
@@ -16,9 +17,10 @@ export default function BookingForm({ prefillCar, onClose }) {
   const [dropoffTime, setDropoffTime] = useState("");
   const [driverAge, setDriverAge] = useState("");
   const [promoCode, setPromoCode] = useState("");
-  const [totalPrice, setTotalPrice] = useState(prefillCar?.price || 0);
+  const [totalPrice, setTotalPrice] = useState(prefillCar?.pricePerDay || 0);
+  const [loading, setLoading] = useState(false);
 
-  // Handles map clicks
+  // Map click handler
   function LocationSelector() {
     useMapEvents({
       click(e) {
@@ -43,36 +45,39 @@ export default function BookingForm({ prefillCar, onClose }) {
       return;
     }
 
-    // Example: POST to backend
-    const bookingData = {
-      carId: prefillCar?.id,
+    const payload = {
+      carId: prefillCar?.id || null,
+      carName: prefillCar?.name || null,
       pickupLocation,
       dropoffLocation,
-      pickupLatLng: pickupCoords,
-      dropoffLatLng: dropoffCoords,
       pickupDate,
       pickupTime,
       dropoffDate,
       dropoffTime,
-      driverAge,
-      promoCode,
-      totalPrice,
+      driverAge: parseInt(driverAge),
+      promoCode: promoCode || null,
+      totalPrice: parseFloat(totalPrice),
     };
 
-    console.log("Booking Data:", bookingData);
+    setLoading(true);
+    const res = await createBooking(payload);
+    setLoading(false);
 
-    alert("Booking saved successfully!");
-
-    if (onClose) onClose();
+    if (res.success) {
+      alert("✅ Booking successful!");
+      if (onClose) onClose();
+    } else {
+      alert(`❌ Booking failed: ${res.message}`);
+    }
   };
 
   return (
     <div className="booking-form-container">
       {prefillCar && (
         <div className="selected-car">
-          <img src={prefillCar.img} alt={prefillCar.name} />
+          <img src={prefillCar.image} alt={prefillCar.name} />
           <h3>{prefillCar.name}</h3>
-          <p>Price per day: ₹{prefillCar.price}</p>
+          <p>Price per day: ₹{prefillCar.pricePerDay}</p>
         </div>
       )}
 
@@ -86,7 +91,9 @@ export default function BookingForm({ prefillCar, onClose }) {
         <input type="number" placeholder="Driver Age" value={driverAge} onChange={(e) => setDriverAge(e.target.value)} required />
         <input type="text" placeholder="Promo Code" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} />
         <input type="number" placeholder="Total Price" value={totalPrice} onChange={(e) => setTotalPrice(e.target.value)} required />
-        <button type="submit" className="submit-btn">Book Now</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Booking..." : "Book Now"}
+        </button>
       </form>
 
       <div className="map-section">
@@ -94,6 +101,7 @@ export default function BookingForm({ prefillCar, onClose }) {
           <button type="button" className={activeSelection === "pickup" ? "active" : ""} onClick={() => setActiveSelection("pickup")}>Set Pickup</button>
           <button type="button" className={activeSelection === "dropoff" ? "active" : ""} onClick={() => setActiveSelection("dropoff")}>Set Drop-off</button>
         </div>
+
         <MapContainer center={[20.5937, 78.9629]} zoom={5} style={{ height: "300px", width: "100%" }}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <LocationSelector />
@@ -104,4 +112,3 @@ export default function BookingForm({ prefillCar, onClose }) {
     </div>
   );
 }
-
